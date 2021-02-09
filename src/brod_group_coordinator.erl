@@ -129,6 +129,9 @@
                                  , brod:offset()}]
           %% The referece of the timer which triggers offset commit
         , offset_commit_timer :: ?undef | reference()
+          %% Set to true to prevent attempts to re-join the group,
+          %% if application is about to terminate.
+        , is_terminating = false :: boolean()
 
           %% configs, see start_link/5 doc for details
         , partition_assignment_strategy  :: partition_assignment_strategy()
@@ -331,6 +334,9 @@ init({Client, GroupId, Topics, Config, CbModule, MemberPid}) ->
           },
   {ok, State}.
 
+handle_info(prepare_shutdown, State) ->
+  NewState = State#state{is_terminating = true},
+  {noreply, NewState};
 handle_info({ack, GenerationId, Topic, Partition, Offset}, State) ->
   {noreply, handle_ack(State, GenerationId, Topic, Partition, Offset)};
 handle_info(?LO_CMD_COMMIT_OFFSETS, #state{is_in_group = true} = State) ->
@@ -345,7 +351,6 @@ handle_info(?LO_CMD_STABILIZE(N, _Reason),
             #state{max_rejoin_attempts = Max} = State) when N >= Max ->
   {stop, max_rejoin_attempts, State};
 handle_info(?LO_CMD_STABILIZE(N, Reason), State) ->
-
   {ok, NewState} = stabilize(State, N, Reason),
   {noreply, NewState};
 handle_info({'EXIT', Pid, Reason},
@@ -388,6 +393,7 @@ handle_info({msg, _Pid, #kpro_rsp{ api = heartbeat
   State = State0#state{hb_ref = ?undef},
   case ?IS_ERROR(EC) of
     true ->
+      log(State, info, "msg: heartbeat ~p\n", [EC]),
       {ok, NewState} = stabilize(State, 0, EC),
       {noreply, NewState};
     false ->
@@ -464,6 +470,8 @@ is_already_connected(#state{connection = Conn}, {Host, Port}) ->
   Port0 =:= Port.
 
 -spec stabilize(state(), integer(), any()) -> {ok, state()}.
+stabilize(#state{is_terminating = true} = State0, _, _) ->
+  {ok, State0};
 stabilize(#state{ rejoin_delay_seconds = RejoinDelaySeconds
                 , member_module        = MemberModule
                 , member_pid           = MemberPid
