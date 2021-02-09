@@ -47,7 +47,7 @@
 -type partition_assignment_strategy() :: brod_partition_assignment_strategy().
 
 %% default configs
--define(SESSION_TIMEOUT_SECONDS, 30).
+-define(SESSION_TIMEOUT_SECONDS, 10).
 -define(HEARTBEAT_RATE_SECONDS, 5).
 -define(PROTOCOL_TYPE, <<"consumer">>).
 -define(MAX_REJOIN_ATTEMPTS, 5).
@@ -332,6 +332,7 @@ init({Client, GroupId, Topics, Config, CbModule, MemberPid}) ->
           , offset_commit_interval_seconds = OffsetCommitIntervalSeconds
           , protocol_name                  = ProtocolName
           },
+  log(State, info, "Session timeout in seconds is: ~p\n", [SessionTimeoutSec]),
   {ok, State}.
 
 handle_info(prepare_shutdown, State) ->
