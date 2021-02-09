@@ -393,7 +393,6 @@ handle_info({msg, _Pid, #kpro_rsp{ api = heartbeat
   State = State0#state{hb_ref = ?undef},
   case ?IS_ERROR(EC) of
     true ->
-      log(State, info, "msg: heartbeat ~p\n", [EC]),
       {ok, NewState} = stabilize(State, 0, EC),
       {noreply, NewState};
     false ->
