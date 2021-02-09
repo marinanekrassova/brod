@@ -332,7 +332,6 @@ init({Client, GroupId, Topics, Config, CbModule, MemberPid}) ->
           , offset_commit_interval_seconds = OffsetCommitIntervalSeconds
           , protocol_name                  = ProtocolName
           },
-  log(State, info, "Session timeout in seconds is: ~p\n", [SessionTimeoutSec]),
   {ok, State}.
 
 handle_info(prepare_shutdown, State) ->
