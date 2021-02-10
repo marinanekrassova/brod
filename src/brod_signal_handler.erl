@@ -51,7 +51,7 @@ handle_event(ErrorMsg, State) ->
   erl_signal_handler:handle_event(ErrorMsg, State),
   {ok, State}.
 
-handle_info(stop, {_} = State) ->
+handle_info(stop, State) ->
   io:format("Stopping due to earlier SIGTERM~n", []),
   ok = init:stop(),
   {ok, State}
@@ -62,8 +62,6 @@ handle_info(_, State) ->
 handle_call(_Request, State) ->
   {ok, ok, State}.
 
-terminate(_Args, {_, _, false}) ->
-  ok;
 terminate(_Args, _State) ->
   io:format("brod_signal_handler is terminating~n", []),
   ok.
